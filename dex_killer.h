@@ -63,16 +63,6 @@ typedef struct {
     u4 dataOff;
 } DexHeader;
 
-typedef struct {
-    uint32_t start;
-    uint32_t end;
-} MemoryRegion;
-
-typedef struct {
-    u1 *buffer;
-    size_t len;
-} DexSegment;
-
 pid_t find_pid(const std::string &pkg);
 
 pid_t find_tid(const pid_t pid);
