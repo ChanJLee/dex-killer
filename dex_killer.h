@@ -63,6 +63,16 @@ typedef struct {
     u4 dataOff;
 } DexHeader;
 
+typedef struct {
+    uint32_t start;
+    uint32_t end;
+} MemoryRegion;
+
+typedef struct {
+    u1 *buffer;
+    size_t len;
+} DexSegment;
+
 pid_t find_pid(const std::string &pkg);
 
 pid_t find_tid(const pid_t pid);
@@ -70,7 +80,5 @@ pid_t find_tid(const pid_t pid);
 int find_mem_file(const pid_t tid);
 
 void scan_memory(std::vector<std::string> &result_container, const std::string &save_to_dir, int tid, int mem_fd);
-
-int copy_memory(const u1 *buffer, ssize_t offset, ssize_t len, const std::string &save_to);
 
 #endif //FUCKDEX_DEX_KILLER_H

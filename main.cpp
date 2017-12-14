@@ -45,7 +45,10 @@ int main(int argc, char *argv[]) {
         return 1;
     }
     std::vector<std::string> result_container;
-    scan_memory(result_container, "/sdcard/", tid, mem_fd);
+    scan_memory(result_container, "/data/local/tmp/kill_dex/", tid, mem_fd);
+    for (int i = 0; i < result_container.size(); ++i) {
+        std::cout << result_container[i] << std::endl;
+    }
     close(mem_fd);
 
     return 0;

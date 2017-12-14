@@ -114,7 +114,7 @@ bool is_usable_mem_info(const char *mem_info) {
     return true;
 }
 
-inline bool is_dex_magic_number(const u1 *buffer, ssize_t offset, ssize_t len) {
+inline bool is_dex_magic_number(const char *buffer, ssize_t offset, ssize_t len) {
     return buffer[offset] == 0x64 &&
            offset + 8 < len &&
            buffer[offset + 1] == 0x65 &&
@@ -124,6 +124,13 @@ inline bool is_dex_magic_number(const u1 *buffer, ssize_t offset, ssize_t len) {
            buffer[offset + 5] == 0x33 &&
            buffer[offset + 6] == 0x35 &&
            buffer[offset + 7] == 0x00;
+}
+
+int copy_memory(const char *buffer, int offset, ssize_t len, const std::string &save_to){
+    FILE *save_to_file = fopen(save_to.c_str(), "wb");
+    int result = fwrite(buffer + offset, sizeof(char), len, save_to_file);
+    fclose(save_to_file); 
+    return result != -1 ? len : -1;
 }
 
 void scan_memory(std::vector<std::string> &result_container, const std::string& save_to_dir, int tid, int mem_fd) {
@@ -164,20 +171,20 @@ void scan_memory(std::vector<std::string> &result_container, const std::string& 
             continue;
         }
 
-        u1 *buffer = (u1 *) malloc(segment_len);
+        char *buffer = (char *) malloc(segment_len * sizeof(char));
         if (buffer == NULL) {
             LOGI("malloc failed");
             continue;
         }
 
-        ssize_t read_len = read(mem_fd, buffer, segment_len);
+        int read_len = read(mem_fd, buffer, segment_len);
         if (read_len <= 0) {
             free(buffer);
-            LOGI("read failed");
+            LOGI("read failed\n");
             continue;
         }
 
-        for (ssize_t i = 0; i < read_len; ++i) {
+        for (int i = 0; i < read_len; ++i) {
             if (is_dex_magic_number(buffer, i, read_len) &&
                 i + sizeof(DexHeader) < read_len) {
 
@@ -192,7 +199,7 @@ void scan_memory(std::vector<std::string> &result_container, const std::string& 
                 std::ostringstream save_to_os;
                 save_to_os << save_to_dir << "/mem_start_" << (mem_address_start + i) << ".dex";
                 std::string save_to = save_to_os.str();
-                int write_len = copy_memory(buffer, i, read_len, save_to);
+                int write_len = copy_memory(buffer, i, dex_header.fileSize, save_to);
                 if (write_len >= 0) {
                     result_container.push_back(save_to);
                     i += write_len;
@@ -201,11 +208,4 @@ void scan_memory(std::vector<std::string> &result_container, const std::string& 
         }
         free(buffer);
     }
-}
-
-int copy_memory(const u1 *buffer, ssize_t offset, ssize_t len, const std::string &save_to) {
-    FILE *save_to_file = fopen(save_to.c_str(), "wb");
-    int result = fwrite(buffer + offset, sizeof(char), len, save_to_file);
-    fclose(save_to_file);
-    return result != -1 ? len : -1;
 }
