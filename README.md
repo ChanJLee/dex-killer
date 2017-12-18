@@ -2,12 +2,16 @@
 
 dex killer is a tools for dumping dex file from memory, so make sure your device has root.
 
+--------------------
+
 ## Directory
 
 - 360 
-  test apk
-- art 
-  screenshot
+
+  contains test apk
+- art
+  
+  contains screenshot
 
 ## MAKE
 
