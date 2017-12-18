@@ -13,6 +13,7 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/user.h>
+#include "sha1.h"
 
 pid_t find_pid(const std::string &pkg) {
     if (pkg.empty()) {
@@ -133,7 +134,14 @@ int copy_memory(const char *buffer, int offset, ssize_t len, const std::string &
     return result != -1 ? len : -1;
 }
 
-void scan_memory(std::vector<std::string> &result_container, const std::string& save_to_dir, int tid, int mem_fd) {
+void release_sha1(char* buffer, int offset, ssize_t len, u1* result) {
+    SHA1_CTX context;
+    SHA1Init(&context);
+    SHA1Update(&context, (unsigned char const *)(buffer + offset), len);
+    SHA1Final(result, &context);
+} 
+
+void scan_memory(std::vector<DexFile> &result_container, const std::string& save_to_dir, int tid, int mem_fd) {
     std::ostringstream maps_file_name_os;
     maps_file_name_os << "/proc/" << tid << "/maps";
     std::string maps_file_name = maps_file_name_os.str();
@@ -196,12 +204,24 @@ void scan_memory(std::vector<std::string> &result_container, const std::string& 
                     break;
                 }
 
+                DexFile dex_file;
+                release_sha1(buffer, i, dex_header.fileSize, dex_file.sha1);
+                std::vector<DexFile>::iterator it = result_container.begin();
+                for (; it != result_container.end(); ++it) {
+                    if (memcmp(dex_file.sha1, it->sha1, SHA1_LEN) == 0) {
+                        break;
+                    }
+                }
+                if (it != result_container.end()) {
+                    break;
+                }
+
                 std::ostringstream save_to_os;
                 save_to_os << save_to_dir << "/mem_start_" << (mem_address_start + i) << ".dex";
-                std::string save_to = save_to_os.str();
-                int write_len = copy_memory(buffer, i, dex_header.fileSize, save_to);
+                dex_file.file_name = save_to_os.str();
+                int write_len = copy_memory(buffer, i, dex_header.fileSize, dex_file.file_name);
                 if (write_len >= 0) {
-                    result_container.push_back(save_to);
+                    result_container.push_back(dex_file);
                     i += write_len;
                 }
             }
