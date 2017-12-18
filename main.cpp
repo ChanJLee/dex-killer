@@ -4,6 +4,8 @@
 #include "dex_killer.h"
 #include <iostream>
 #include <string>
+#include <sys/stat.h>
+#include <sys/types.h>
 
 const size_t MAX_RETRY_COUNT = 20;
 
@@ -44,10 +46,15 @@ int main(int argc, char *argv[]) {
     if (mem_fd <= 0) {
         return 1;
     }
-    std::vector<std::string> result_container;
-    scan_memory(result_container, "/data/local/tmp/kill_dex/", tid, mem_fd);
+
+    const char* target_dir =  "/data/local/tmp/kill_dex";
+    mkdir(target_dir, 0777);
+    
+    std::vector<DexFile> result_container;
+    scan_memory(result_container, target_dir, tid, mem_fd);
+    std::cout << "write dex to: " << target_dir << std::endl;
     for (int i = 0; i < result_container.size(); ++i) {
-        std::cout << result_container[i] << std::endl;
+        std::cout << "get: " << result_container[i].file_name << std::endl;
     }
     close(mem_fd);
 
