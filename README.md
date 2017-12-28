@@ -2,6 +2,8 @@
 
 dex killer is a tools for dumping dex file from memory, so make sure your device has root.
 
+![](logoko.png)
+
 --------------------
 
 ## Directory
